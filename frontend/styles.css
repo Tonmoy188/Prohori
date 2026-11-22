@@ -3,8 +3,16 @@
 --low:#2E9B5F;--med:#E8B800;--high:#F08A24;--crit:#D64545;--low-bg:#E6F5EC;--med-bg:#FFF6D6;--high-bg:#FFEBD6;--crit-bg:#FDE3E3}
 html,body,.stApp,[class*="st-"]:not([data-testid="stIconMaterial"]):not([class*="material"]),button,input,textarea{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 .stApp{color-scheme:light;background:linear-gradient(180deg,#F5FAF7 0%,#E9F6EE 100%);color:var(--ink)}
-#MainMenu,footer,[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important}
-header[data-testid="stHeader"]{background:transparent}
+#MainMenu,footer,[data-testid="stDecoration"],[data-testid="stStatusWidget"],
+[data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stAppDeployButton"],.stAppDeployButton{display:none!important}
+header[data-testid="stHeader"]{background:transparent;z-index:999990}
+/* Do NOT hide [data-testid="stToolbar"]: in current Streamlit it also holds the button that re-opens a collapsed sidebar. */
+[data-testid="stToolbar"]{background:transparent;visibility:visible}
+[data-testid="stExpandSidebarButton"],[data-testid="stSidebarCollapsedControl"]{visibility:visible;opacity:1}
+[data-testid="stExpandSidebarButton"] button,[data-testid="stSidebarCollapsedControl"] button{background:#0B6B4A;color:#fff;border-radius:12px;min-width:44px;min-height:44px;box-shadow:0 4px 12px rgba(6,76,55,.25)}
+[data-testid="stExpandSidebarButton"] *,[data-testid="stSidebarCollapsedControl"] *{color:#fff}
+/* Safety net: when the sidebar is collapsed, show the in-page page menu on every screen size. */
+.stApp:has([data-testid="stSidebar"][aria-expanded="false"]) .st-key-mnav{display:block;margin:-.2rem 0 .6rem}
 .block-container{max-width:1280px;padding:1.4rem 2rem 3rem}
 h1,h2,h3{color:var(--g0);letter-spacing:-.01em}
 /* ---------- sidebar ---------- */
