@@ -6,6 +6,12 @@ DengueWatch provides public health officers with a **2-, 3- and 4-week early war
 
 All predictions are **model estimates**, not confirmed dengue cases. For detailed system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+
+<img width="1600" height="895" alt="WhatsApp Image 2026-11-22 at 1 38 09 PM (3)" src="https://github.com/user-attachments/assets/9a123038-ff2f-4023-884e-d36657a1b7a9" />
+<img width="1600" height="766" alt="WhatsApp Image 2026-11-22 at 1 38 09 PM (1)" src="https://github.com/user-attachments/assets/943bec86-4b1b-4787-b21c-1e8e2ffad8ef" />
+<img width="1600" height="768" alt="WhatsApp Image 2026-11-22 at 1 38 09 PM" src="https://github.com/user-attachments/assets/d910a7d6-c2b7-4811-883b-38b7ea1a75db" />
+
+
 ## Quick Start
 
 Requires **Python 3.11+** and internet access for live Open-Meteo weather data.
