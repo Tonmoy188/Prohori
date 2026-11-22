@@ -6,20 +6,6 @@ DengueWatch provides public health officers with a **2-, 3- and 4-week early war
 
 All predictions are **model estimates**, not confirmed dengue cases. For detailed system design, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Dashboard Preview
-
-### Main Dashboard
-![DengueWatch Overview](docs/screenshots/overview.png)
-
-### Ward Prediction and Risk Drivers
-![Prediction Details](docs/screenshots/prediction.png)
-
-### Weather Outlook
-![Weather Outlook](docs/screenshots/weather.png)
-
-### Model Performance
-![Model Performance](docs/screenshots/performance.png)
-
 ## Quick Start
 
 Requires **Python 3.11+** and internet access for live Open-Meteo weather data.
