@@ -236,8 +236,6 @@ Optional environment variables can be configured in `.env`.
 
 The Gemini API key is only required for the optional chatbot. All prediction and dashboard functionality works without it.
 
-**Never commit `.env` or expose API keys in the repository.**
-
 ## Limitations
 
 1. **Weather forecast horizon:** Open-Meteo provides forecasts up to approximately 16 days. Only next week's forecast weather is available as a model input. Predictions for weeks 3 and 4 rely primarily on historical weather patterns, lagged features and ward vulnerability rather than direct forecasts for those target weeks.
