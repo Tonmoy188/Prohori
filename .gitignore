@@ -1,8 +1,23 @@
+# Secrets
 .env
+.streamlit/secrets.toml
+frontend/.streamlit/secrets.toml
+
+# Python
 venv/
 .venv/
 __pycache__/
 *.pyc
-cache/
 .pytest_cache/
-.streamlit/secrets.toml
+
+# Runtime cache (weather); /exports is intentionally COMMITTED
+cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archives
+*.zip
