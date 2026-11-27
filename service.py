@@ -82,9 +82,29 @@ class Service:
 
     def frames(self):
         """Historical dengue/weather rows + live weather rows through current forecast-completed week."""
-        payload, stale = weather.get_payload()
+        try:
+            payload, stale = weather.get_payload()
+        except weather.WeatherUnavailable as exc:
+            with self._lock:
+                return self._offline_frames(str(exc))
         with self._lock:
             return self._frames_locked(payload, stale)
+
+    def _offline_frames(self, reason):
+        """Deterministic fallback when Open-Meteo and the disk cache are both unavailable: score the
+        newest week of the local historical dataset instead of failing."""
+        if self._stamp != "offline":
+            frames = self.history.copy()
+            for col in getattr(engine, "FWD_COLS", []):
+                frames[col] = float("nan")
+            self._frames, self._stamp, self._cache = frames.sort_values(["ward_id", "date"]).reset_index(drop=True), "offline", {}
+        return self._frames, {
+            "fetched_at_utc": None, "stale": True, "offline": True,
+            "source": f"offline fallback: local historical dataset ({reason})",
+            "forecast_days_available": 0,
+            "historical_dataset_through": str(self.history_max.date()),
+            "live_weather_week": None,
+        }
 
     def _frames_locked(self, payload, stale):
         if payload["fetched_at"] != self._stamp:
@@ -135,6 +155,7 @@ class Service:
             "forecast_days_available": payload.get("forecast_days_available", 16),
             "historical_dataset_through": str(self.history_max.date()),
             "live_weather_week": str(self._frames[self._frames.dengue_cases.isna()].date.max().date()),
+            "offline": False,
         }
         return self._frames, meta
 
@@ -145,7 +166,10 @@ class Service:
         Future daily forecasts are exposed to the UI/chatbot, but are not falsely injected
         into a model trained without historical forecast snapshots.
         """
-        payload, stale = weather.get_payload()
+        try:
+            payload, stale = weather.get_payload()
+        except weather.WeatherUnavailable:
+            return self._offline_weather_context(city)
         weekly = weather.weekly_by_city(payload).get(city)
         if weekly is None or weekly.empty:
             raise weather.WeatherUnavailable(f"No complete current weather week for {city}")
@@ -172,6 +196,17 @@ class Service:
                  "Future daily forecasts are displayed separately and are not model inputs.")
             ),
         }
+
+    def _offline_weather_context(self, city):
+        last = self.history[self.history.city == city].sort_values("date").tail(1)
+        if last.empty:
+            raise KeyError(city)
+        cur = last[["date", "rainfall_mm", "avg_temp_c", "max_temp_c", "min_temp_c", "relative_humidity_pct"]].iloc[0].to_dict()
+        cur["date"] = pd.Timestamp(cur["date"]).strftime("%Y-%m-%d")
+        cur["forecast_days"] = 0
+        return {"city": city, "provider": "offline: local historical dataset", "fetched_at_utc": None,
+                "stale_cache": True, "forecast_days_available": 0, "current_week_weather": cur,
+                "daily_forecast": [], "model_weather_input": "Offline: newest week of the local historical dataset."}
 
     def _all(self, h):
         f, meta = self.frames()
@@ -224,10 +259,11 @@ class Service:
 
     def _coverage(self, city, origin, h, used):
         """State exactly what part of the prediction window real forecast weather covers."""
-        payload, _ = weather.get_payload()
-        # weather.py exposes forecast_daily(), not forecast_last_date().
-        # Derive the provider's actual last forecast day from the returned records.
-        daily = weather.forecast_daily(payload, city)
+        try:
+            payload, _ = weather.get_payload()
+            daily = weather.forecast_daily(payload, city)
+        except weather.WeatherUnavailable:
+            daily = []
         last = max((row.get("date") for row in daily if row.get("date")), default=None)
         target_start = origin + pd.Timedelta(weeks=h)
         target_end = target_start + pd.Timedelta(days=6)
