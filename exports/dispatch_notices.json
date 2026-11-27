@@ -1,0 +1,2378 @@
+{
+  "settings": {
+    "origin": "2025-06-16",
+    "horizon": 3,
+    "stock": 60,
+    "crews": 25,
+    "out": null
+  },
+  "totals": {
+    "saline_bags_needed": {
+      "required": 2092,
+      "available_stock": 1255,
+      "allocated": 1255,
+      "deficit": 837
+    },
+    "diagnostic_kits_needed": {
+      "required": 1016,
+      "available_stock": 609,
+      "allocated": 609,
+      "deficit": 407
+    },
+    "hospital_beds_required": {
+      "required": 260,
+      "available_stock": 156,
+      "allocated": 156,
+      "deficit": 104
+    },
+    "spraying_crews": {
+      "required": 246,
+      "available": 25,
+      "assigned": 25,
+      "unassigned": 0
+    }
+  },
+  "cities": {
+    "Chattogram": {
+      "bed_capacity": 37,
+      "bed_demand": 42,
+      "beds_occupied": 37,
+      "utilization": 1.0,
+      "remaining_headroom": 0,
+      "unrouted_deficit": 5,
+      "status": "CITY_OVER_CAPACITY"
+    },
+    "Dhaka North": {
+      "bed_capacity": 76,
+      "bed_demand": 85,
+      "beds_occupied": 76,
+      "utilization": 1.0,
+      "remaining_headroom": 0,
+      "unrouted_deficit": 9,
+      "status": "CITY_OVER_CAPACITY"
+    },
+    "Dhaka South": {
+      "bed_capacity": 81,
+      "bed_demand": 86,
+      "beds_occupied": 81,
+      "utilization": 1.0,
+      "remaining_headroom": 0,
+      "unrouted_deficit": 5,
+      "status": "CITY_OVER_CAPACITY"
+    },
+    "Gazipur": {
+      "bed_capacity": 22,
+      "bed_demand": 25,
+      "beds_occupied": 22,
+      "utilization": 1.0,
+      "remaining_headroom": 0,
+      "unrouted_deficit": 3,
+      "status": "CITY_OVER_CAPACITY"
+    },
+    "Narayanganj": {
+      "bed_capacity": 19,
+      "bed_demand": 22,
+      "beds_occupied": 19,
+      "utilization": 1.0,
+      "remaining_headroom": 0,
+      "unrouted_deficit": 3,
+      "status": "CITY_OVER_CAPACITY"
+    }
+  },
+  "transfers": [
+    {
+      "city": "Dhaka North",
+      "from_ward": "DNCC_Ward_15",
+      "to_ward": "DNCC_Ward_04",
+      "patients": 2
+    },
+    {
+      "city": "Dhaka North",
+      "from_ward": "DNCC_Ward_15",
+      "to_ward": "DNCC_Ward_17",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka North",
+      "from_ward": "DNCC_Ward_01",
+      "to_ward": "DNCC_Ward_05",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka North",
+      "from_ward": "DNCC_Ward_01",
+      "to_ward": "DNCC_Ward_16",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_20",
+      "to_ward": "DSCC_Ward_14",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_20",
+      "to_ward": "DSCC_Ward_04",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_18",
+      "to_ward": "DSCC_Ward_04",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_18",
+      "to_ward": "DSCC_Ward_07",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_03",
+      "to_ward": "DSCC_Ward_13",
+      "patients": 1
+    },
+    {
+      "city": "Dhaka South",
+      "from_ward": "DSCC_Ward_03",
+      "to_ward": "DSCC_Ward_06",
+      "patients": 1
+    },
+    {
+      "city": "Gazipur",
+      "from_ward": "GCC_Ward_03",
+      "to_ward": "GCC_Ward_01",
+      "patients": 1
+    },
+    {
+      "city": "Gazipur",
+      "from_ward": "GCC_Ward_03",
+      "to_ward": "GCC_Ward_04",
+      "patients": 1
+    },
+    {
+      "city": "Narayanganj",
+      "from_ward": "NCC_Ward_03",
+      "to_ward": "NCC_Ward_04",
+      "patients": 1
+    },
+    {
+      "city": "Narayanganj",
+      "from_ward": "NCC_Ward_03",
+      "to_ward": "NCC_Ward_01",
+      "patients": 1
+    }
+  ],
+  "notices": [
+    {
+      "ward_id": "DSCC_Ward_04",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 44,
+          "allocated": 36,
+          "deficit": 8
+        },
+        "diagnostic_kits_needed": {
+          "required": 21,
+          "allocated": 17,
+          "deficit": 4
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 4,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 7,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DSCC_Ward_20",
+        "receive 1 from DSCC_Ward_18"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_12",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 19.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 45,
+          "allocated": 37,
+          "deficit": 8
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 18,
+          "deficit": 4
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 5,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 6,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_03",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 19.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 46,
+          "allocated": 36,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 17,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 5,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 6,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_01",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 45,
+          "allocated": 35,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 17,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 5,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 3,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 6,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_18",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 19.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 46,
+          "allocated": 36,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 17,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 5,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_06",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 44,
+          "allocated": 33,
+          "deficit": 11
+        },
+        "diagnostic_kits_needed": {
+          "required": 21,
+          "allocated": 16,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 4,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 6,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DSCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "GCC_Ward_03",
+      "city": "Gazipur",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.7,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 45,
+          "allocated": 33,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 16,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 4,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> GCC_Ward_01",
+        "1 -> GCC_Ward_04"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "GCC_Ward_01",
+      "city": "Gazipur",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 36,
+          "allocated": 26,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 13,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 3,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from GCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_10",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 45,
+          "allocated": 33,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 16,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 4,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 3,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "NCC_Ward_01",
+      "city": "Narayanganj",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 26,
+          "deficit": 11
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 13,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 4,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 6,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from NCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_19",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 44,
+          "allocated": 31,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 21,
+          "allocated": 15,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 4,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 4,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_05",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 36,
+          "allocated": 26,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 13,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 3,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DNCC_Ward_01"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_19",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 43,
+          "allocated": 30,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 21,
+          "allocated": 15,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_12",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 43,
+          "allocated": 29,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 21,
+          "allocated": 14,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "GCC_Ward_02",
+      "city": "Gazipur",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.8,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 45,
+          "allocated": 30,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 15,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 6,
+          "allocated": 4,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 2,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "GCC_Ward_04",
+      "city": "Gazipur",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 34,
+          "allocated": 22,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 17,
+          "allocated": 11,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 3,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from GCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "GCC_Ward_05",
+      "city": "Gazipur",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 24,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 12,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_08",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.7,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 24,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 12,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_09",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 17.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 42,
+          "allocated": 27,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 20,
+          "allocated": 13,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 2,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_16",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 33,
+          "allocated": 21,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 10,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 3,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DNCC_Ward_01"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "NCC_Ward_05",
+      "city": "Narayanganj",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 18.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 44,
+          "allocated": 28,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 22,
+          "allocated": 14,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_10",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 16.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 38,
+          "allocated": 24,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 19,
+          "allocated": 12,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_11",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 34,
+          "allocated": 21,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 10,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 3,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_02",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 34,
+          "allocated": 21,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 10,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_13",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 36,
+          "allocated": 22,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 11,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DSCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "NCC_Ward_04",
+      "city": "Narayanganj",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 13.1,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 31,
+          "allocated": 19,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 9,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from NCC_Ward_03"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_04",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 36,
+          "allocated": 22,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 17,
+          "allocated": 10,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_01",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 17.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 40,
+          "allocated": 24,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 20,
+          "allocated": 12,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> DNCC_Ward_05",
+        "1 -> DNCC_Ward_16"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_07",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 16.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 40,
+          "allocated": 24,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 19,
+          "allocated": 11,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 5,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_04",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 10.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 24,
+          "allocated": 14,
+          "deficit": 10
+        },
+        "diagnostic_kits_needed": {
+          "required": 12,
+          "allocated": 7,
+          "deficit": 5
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 2,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 5,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 2 from DNCC_Ward_15"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_07",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 13.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 33,
+          "allocated": 19,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 9,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_10",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 29,
+          "allocated": 16,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 8,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_17",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 11.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 27,
+          "allocated": 15,
+          "deficit": 12
+        },
+        "diagnostic_kits_needed": {
+          "required": 13,
+          "allocated": 7,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 2,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DNCC_Ward_15"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_14",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 30,
+          "allocated": 16,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 8,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 1,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_06",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 33,
+          "allocated": 18,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 9,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_02",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 31,
+          "allocated": 17,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 8,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_01",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 29,
+          "allocated": 16,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 7,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_20",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 19,
+          "deficit": 18
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 9,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> DSCC_Ward_14",
+        "1 -> DSCC_Ward_04"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_09",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 13.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 31,
+          "allocated": 16,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 8,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_15",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 31,
+          "allocated": 16,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 8,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_08",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 33,
+          "allocated": 17,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 16,
+          "allocated": 8,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_18",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.7,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 19,
+          "deficit": 18
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 9,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> DSCC_Ward_04",
+        "1 -> DSCC_Ward_07"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_03",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 37,
+          "allocated": 19,
+          "deficit": 18
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 9,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 3,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> DSCC_Ward_13",
+        "1 -> DSCC_Ward_06"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_16",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 13.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 31,
+          "allocated": 16,
+          "deficit": 15
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 8,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_07",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 10.7,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 25,
+          "allocated": 12,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 12,
+          "allocated": 6,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 2,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 4,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DSCC_Ward_18"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_11",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 34,
+          "allocated": 17,
+          "deficit": 17
+        },
+        "diagnostic_kits_needed": {
+          "required": 17,
+          "allocated": 8,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 1,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_15",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 38,
+          "allocated": 19,
+          "deficit": 19
+        },
+        "diagnostic_kits_needed": {
+          "required": 18,
+          "allocated": 9,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 5,
+          "allocated": 2,
+          "deficit": 3
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "2 -> DNCC_Ward_04",
+        "1 -> DNCC_Ward_17"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_03",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 15.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 36,
+          "allocated": 17,
+          "deficit": 19
+        },
+        "diagnostic_kits_needed": {
+          "required": 17,
+          "allocated": 8,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 2,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_06",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.5,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 30,
+          "allocated": 14,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 7,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_09",
+      "city": "Chattogram",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 10.4,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 25,
+          "allocated": 12,
+          "deficit": 13
+        },
+        "diagnostic_kits_needed": {
+          "required": 12,
+          "allocated": 6,
+          "deficit": 6
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_17",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 11.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 26,
+          "allocated": 12,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 13,
+          "allocated": 6,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_08",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.5,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 30,
+          "allocated": 14,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 6,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 2,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "NCC_Ward_03",
+      "city": "Narayanganj",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 14.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 34,
+          "allocated": 16,
+          "deficit": 18
+        },
+        "diagnostic_kits_needed": {
+          "required": 17,
+          "allocated": 8,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 1,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "1 -> NCC_Ward_04",
+        "1 -> NCC_Ward_01"
+      ],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_20",
+      "city": "Dhaka North",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 10.3,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 25,
+          "allocated": 11,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 12,
+          "allocated": 5,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "NCC_Ward_02",
+      "city": "Narayanganj",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 12.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 30,
+          "allocated": 13,
+          "deficit": 17
+        },
+        "diagnostic_kits_needed": {
+          "required": 15,
+          "allocated": 7,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 4,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 2,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_05",
+      "city": "Dhaka South",
+      "risk_tier": "Critical",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 11.9,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 28,
+          "allocated": 12,
+          "deficit": 16
+        },
+        "diagnostic_kits_needed": {
+          "required": 14,
+          "allocated": 6,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 4,
+          "allocated": 2,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 2,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DNCC_Ward_13",
+      "city": "Dhaka North",
+      "risk_tier": "High",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 11.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 27,
+          "allocated": 10,
+          "deficit": 17
+        },
+        "diagnostic_kits_needed": {
+          "required": 13,
+          "allocated": 5,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_02",
+      "city": "Chattogram",
+      "risk_tier": "High",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 11.0,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 26,
+          "allocated": 9,
+          "deficit": 17
+        },
+        "diagnostic_kits_needed": {
+          "required": 13,
+          "allocated": 4,
+          "deficit": 9
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "CCC_Ward_05",
+      "city": "Chattogram",
+      "risk_tier": "High",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 10.6,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 25,
+          "allocated": 8,
+          "deficit": 17
+        },
+        "diagnostic_kits_needed": {
+          "required": 12,
+          "allocated": 4,
+          "deficit": 8
+        },
+        "hospital_beds_required": {
+          "required": 3,
+          "allocated": 1,
+          "deficit": 2
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 2,
+        "net_deficit": 1,
+        "utilization": 1.0
+      },
+      "transfers": [],
+      "stock_pct": 60
+    },
+    {
+      "ward_id": "DSCC_Ward_14",
+      "city": "Dhaka South",
+      "risk_tier": "High",
+      "origin_week": "2025-06-16",
+      "target_week": "2025-07-07",
+      "horizon_weeks": 3,
+      "predicted_cases": 8.2,
+      "supplies": {
+        "saline_bags_needed": {
+          "required": 20,
+          "allocated": 6,
+          "deficit": 14
+        },
+        "diagnostic_kits_needed": {
+          "required": 10,
+          "allocated": 3,
+          "deficit": 7
+        },
+        "hospital_beds_required": {
+          "required": 2,
+          "allocated": 1,
+          "deficit": 1
+        }
+      },
+      "crews_assigned": 0,
+      "crews_required": 3,
+      "supply_status": "CRITICAL_DEFICIT",
+      "beds": {
+        "capacity": 3,
+        "net_deficit": 0,
+        "utilization": 1.0
+      },
+      "transfers": [
+        "receive 1 from DSCC_Ward_20"
+      ],
+      "stock_pct": 60
+    }
+  ]
+}

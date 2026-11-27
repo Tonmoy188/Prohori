@@ -8,9 +8,9 @@
         "H4": "classifiers/final_classifier_h4.joblib"
     },
     "regression_models": {
-        "H2": "regressors/final_regressor_h2.joblib",
-        "H3": "regressors/final_regressor_h3.joblib",
-        "H4": "regressors/final_regressor_h4.joblib"
+        "H2": "v2_onsite/regressors/final_regressor_h2.joblib",
+        "H3": "v2_onsite/regressors/final_regressor_h3.joblib",
+        "H4": "v2_onsite/regressors/final_regressor_h4.joblib"
     },
     "forecast_horizons": [
         2,

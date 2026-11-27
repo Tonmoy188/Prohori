@@ -1,5 +1,5 @@
 
-"""Grounded chatbot using the configured live Gemini API only; no template/demo fallback."""
+"""Grounded chatbot: Gemini API when reachable, deterministic template reply when offline or unconfigured."""
 import json
 import re
 import threading
@@ -27,24 +27,25 @@ class ChatRateLimited(Exception):
 
 def _compact_weather(ctx):
     """Trim weather context to what the LLM needs (~70% fewer input tokens)."""
-    cur = ctx["current_week_weather"]
+    cur = ctx.get("current_week_weather") or {}
     keep = ("date", "rainfall_mm", "avg_temp_c", "relative_humidity_pct")
     return {
-        "stale": ctx["stale_cache"],
+        "stale": ctx.get("stale_cache", True),
         "current_week": {
             k: (round(cur[k], 1) if isinstance(cur[k], float) else cur[k])
-            for k in keep
+            for k in keep if k in cur
         },
         "forecast_7d": [
-            {k: d[k] for k in keep}
-            for d in ctx["daily_forecast"][:7]
+            {k: d.get(k) for k in keep}
+            for d in (ctx.get("daily_forecast") or [])[:7]
         ],
     }
 
 
 class ChatService:
-    def __init__(self, service):
+    def __init__(self, service, ops=None):
         self.svc = service
+        self.ops = ops
         self.client = None
         self.init_error = None
         self._cache, self._hits, self._lock = {}, {}, threading.Lock()
@@ -166,12 +167,27 @@ class ChatService:
             },
         }
 
-    def ask(self, message, session_id="default", ward_id=None, horizon=None):
-        if self.client is None:
-            raise ChatConfigurationError(
-                self.init_error or "Gemini API is not configured"
-            )
+    @staticmethod
+    def _template(context, reason):
+        """Deterministic reply built only from the model context (offline / no API key)."""
+        if context.get("scope") == "ward":
+            p = context["prediction"]
+            probs = ", ".join(f"{k} {v:.0%}" for k, v in p["probabilities"].items())
+            top = max(context.get("drivers") or [{"driver": "n/a", "change_in_expected_cases": 0}],
+                      key=lambda d: abs(d["change_in_expected_cases"]))
+            text = (f"{p['ward_id']} ({p['city']}): estimated {p['expected_cases']:.1f} cases in the week of "
+                    f"{p['forecast_week']} ({p['horizon_weeks']}-week forecast), risk tier {p['risk_tier']} "
+                    f"({probs}). Largest driver: {top['driver']}. These are model estimates, not confirmed cases.")
+        else:
+            wards = ", ".join(f"{w['ward_id']} ({w['risk_tier']}, {w['expected_cases']:.1f})"
+                              for w in context.get("highest_risk_wards", [])[:3])
+            text = (f"{context['scope']}: {context['horizon_weeks']}-week forecast for the week of "
+                    f"{context['forecast_week']}. Tier counts {context['tier_counts']}. Highest estimated burden: "
+                    f"{wards}. These are model estimates, not confirmed cases.")
+        return {"reply": text, "source": "offline_template", "model": None, "cached": False,
+                "fallback_reason": reason, "usage": None}
 
+    def ask(self, message, session_id="default", ward_id=None, horizon=None):
         message = re.sub(r"\s+", " ", message).strip()[:300]
 
         ward_id, city, horizon = self._resolve(
@@ -194,27 +210,32 @@ class ChatService:
         if hit and time.time() - hit[0] < config.CHAT_CACHE_TTL_S:
             return {**hit[1], "cached": True}
 
-        # Gemini API request
+        if self.client is None:
+            return self._template(context, self.init_error or "Gemini API is not configured")
+
         from google.genai import types
 
-        response = self.client.models.generate_content(
-            model=config.GEMINI_MODEL,
-            contents=(
-                f"CONTEXT:\n"
-                f"{json.dumps(context, separators=(',', ':'))}"
-                f"\n\nQUESTION: {message}"
-            ),
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM,
-                max_output_tokens=config.CHAT_MAX_TOKENS,
-                temperature=0.2,
-            ),
-        )
+        try:
+            response = self.client.models.generate_content(
+                model=config.GEMINI_MODEL,
+                contents=(
+                    f"CONTEXT:\n"
+                    f"{json.dumps(context, separators=(',', ':'))}"
+                    f"\n\nQUESTION: {message}"
+                ),
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM,
+                    max_output_tokens=config.CHAT_MAX_TOKENS,
+                    temperature=0.2,
+                ),
+            )
+        except Exception as exc:  # network down, quota, timeout: stay useful offline
+            return self._template(context, f"Gemini unavailable: {type(exc).__name__}")
 
         answer = (response.text or "").strip()
 
         if not answer:
-            raise RuntimeError("Gemini API returned an empty response")
+            return self._template(context, "Gemini returned an empty response")
 
         usage = getattr(response, "usage_metadata", None)
 

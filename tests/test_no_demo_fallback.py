@@ -1,4 +1,4 @@
-"""Small offline checks for the no-demo behavior and model bundle metadata."""
+"""Offline checks for the Phase 1 model bundles and the chatbot fallback."""
 import sys
 from pathlib import Path
 
@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import config
-from chat import ChatConfigurationError, ChatService
+from chat import ChatService
 from service import Service
 
 
@@ -19,14 +19,17 @@ def test_models_are_trained_from_supplied_history():
         assert bundle["feature_version"] == "causal_weekly_weather_v3_fwd1"
 
 
-def test_chatbot_does_not_return_template_when_key_is_missing(monkeypatch):
+def test_chatbot_uses_grounded_template_when_key_is_missing(monkeypatch):
+    import weather
+
+    def down(*_a, **_k):
+        raise weather.WeatherUnavailable("offline (test)")
     monkeypatch.setattr(config, "GEMINI_API_KEY", "")
+    monkeypatch.setattr(weather, "get_payload", down)
     bot = ChatService(Service())
-    try:
-        bot.ask("hello")
-    except ChatConfigurationError:
-        return
-    raise AssertionError("Chatbot must fail closed without a real API key")
+    reply = bot.ask("hello")
+    assert reply["source"] == "offline_template"
+    assert "model estimates" in reply["reply"]
 
 
 def test_trained_models_score_historical_origin_rows():

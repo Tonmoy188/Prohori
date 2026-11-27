@@ -52,3 +52,28 @@ Dengue at t+h follows rain 2-4 weeks earlier, so the target week needs no foreca
 | Predictions cached per (ward, horizon) and invalidated only when new weather arrives | `service.py` |
 | Numeric prediction never calls an LLM; chat is optional | `chat.py` |
 | LLM: Gemini 2.5 Flash, `max_output_tokens=300`, temperature 0.2, 300-char input cap, compact context (7-day forecast, no raw history; ~1.6k chars per ward question), 5-min response cache, 10 requests/min per session, 20 s timeout | `chat.py`, `config.py` |
+## Phase 2 operations engine (fully offline)
+
+```text
+data/onsite_dengue_clean.csv  (+ data/case_reports/reports.csv uploaded via POST /ops/case-reports)
+        v
+features_v2.build_features   101 columns: case lags 0-52, case rolling mean/std/max (3/4/8/12 w), weather lags 0-8,
+                             rolling weather, rain sums, season sin/cos, ward vulnerability interactions
+        v
+models/classifiers/final_classifier_h{2,3,4}.joblib     XGB (H2, H4) / HGB (H3)  -> tier probabilities (0..3 -> Low..Critical)
+models/v2_onsite/regressors/final_regressor_h{2,3,4}.joblib  HGB (H2) / ExtraTrees (H3, H4) -> expected cases
+        v
+ops.OpsEngine
+  forecast      expected cases, tier, supply need = cases x per-case ratio (least squares on onsite data)
+  allocate      priority water-filling of stock_pct x total need; weight = tier rank x density x cases; CRITICAL_DEFICIT flags
+  assign_crews  greedy by marginal cases prevented x priority
+  route_overflow  beds over capacity moved to wards with headroom in the same city only
+  simulate / roi_ranking  ML counterfactual over H2-H4: case and breeding features reduced by crew effect, regressors re-run
+        v
+dispatch.py  SMS (<=160 chars) / WhatsApp / HTML / PDF  ->  /ops/* endpoints, Operations dashboard page, exports/
+```
+
+- **Why water-filling:** it never allocates more than a ward needs or more than the regional stock, and gives every ward a share proportional to its priority weight, so high-risk dense wards fill first without starving the rest.
+- **Why counterfactual re-scoring:** the simulator uses the same trained models as the forecast, so crew impact is consistent with the forecast instead of a separate hand-made curve. Effect sizes per crew are configurable (`LARVICIDE_EFFECT_PER_CREW`, `FOGGING_EFFECT_PER_CREW`) and should be calibrated with field data.
+- **Offline guarantees:** Phase 2 modules make no network calls. `service.py` falls back to the newest local week when Open-Meteo and the disk cache are unavailable, and `chat.py` returns a grounded template reply when Gemini is not configured or unreachable. `tests/test_ops.py` checks this with the weather provider disabled.
+- **Validation:** the rebuilt features reproduce the saved pipelines' inputs (max abs difference ~4e-7); regressor holdout MAE 1.07 / 1.18 / 1.41 (H2 / H3 / H4).
