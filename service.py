@@ -1,273 +1,220 @@
-"""Historical-data-trained dengue model + real observed/current weather ingestion."""
-import threading
+"""DengueWatch Phase 2 prediction and operations service (fully offline)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 
-import config
 import engine
-import weather
+import operations
+import simulator
 
-NOTE = (
-    "Estimated dengue cases for the target week using the saved model and its original feature schema. "
-    "Historical dengue/weather data is used for training context; current weather comes from Open-Meteo. "
-    "Next-week forecast values are model inputs only when the loaded model was trained with those features. "
-    "Later daily forecasts are shown as context, not treated as dengue observations. "
-    "No live dengue case feed is connected."
-)
+HORIZONS = (2, 3, 4)
+TIERS = ("Low", "Medium", "High", "Critical")
+RISK_LABELS = {0: "Low", 1: "Medium", 2: "High", 3: "Critical",
+               "0": "Low", "1": "Medium", "2": "High", "3": "Critical",
+               "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical"}
 
+
+
+def _load_model(path):
+    """joblib.load, with support for portable XGBoost classifiers (booster stored as JSON)."""
+    obj = joblib.load(path)
+    if isinstance(obj, dict) and obj.get("portable_xgb"):
+        from sklearn.pipeline import Pipeline
+        from xgboost import XGBClassifier
+        clf = XGBClassifier(**obj["params"])
+        clf.load_model(bytearray(obj["booster"]))
+        return Pipeline(list(obj["prefix"]) + [(obj["name"], clf)])
+    return obj
 
 class Service:
-    def __init__(self):
-        # Keep the saved estimators unchanged. Build inference inputs from each bundle's
-        # own saved feature list; v2 bundles do not contain the three v3 forecast features.
-        model_dir = config.ROOT / "models"
-        if not all((model_dir / f"dengue_h{h}w.joblib").is_file() for h in config.HORIZONS):
-            model_dir = config.ROOT
+    """Loads Phase 2 models and serves multi-horizon ward predictions."""
 
-        self.models = {}
-        self.model_forecast_features = {}
-        engine_forecast_cols = list(getattr(engine, "FWD_COLS", []))
-        for h in config.HORIZONS:
-            path = model_dir / f"dengue_h{h}w.joblib"
-            if not path.is_file():
-                raise FileNotFoundError(f"Missing trained {h}-week model: {path}")
-            bundle = joblib.load(path)
-            if bundle.get("horizon_weeks") not in (None, h):
-                raise ValueError(f"Wrong model loaded for horizon {h}: {path}")
+    def __init__(self, root: Path | str | None = None) -> None:
+        self.root = Path(root) if root else Path(__file__).resolve().parent
+        model_dir = self.root / "models" / "v2_onsite"
+        self.dataset_path = self.root / "data" / "onsite_dengue_clean.csv"
 
-            version = str(bundle.get("feature_version", ""))
-            if not (version.startswith("causal_weekly_weather_v2") or
-                    version.startswith("causal_weekly_weather_v3")):
-                raise ValueError(
-                    f"Unsupported model feature version in {path}: {version or 'missing'}"
-                )
-            features = bundle.get("features")
-            if not isinstance(features, (list, tuple)) or not features:
-                raise ValueError(f"Model {path} does not contain a valid saved feature list")
-            features = list(features)
-            for estimator_name in ("clf", "reg"):
-                estimator = bundle.get(estimator_name)
-                expected_n = getattr(estimator, "n_features_in_", None)
-                if expected_n is not None and int(expected_n) != len(features):
-                    raise ValueError(
-                        f"{path}: {estimator_name} expects {expected_n} features, "
-                        f"but bundle lists {len(features)}"
-                    )
-            self.models[h] = bundle
-            self.model_forecast_features[h] = [c for c in engine_forecast_cols if c in features]
+        if not self.dataset_path.is_file():
+            raise FileNotFoundError(f"Phase 2 dataset not found: {self.dataset_path}")
+        self.history = pd.read_csv(self.dataset_path, parse_dates=["date"])
+        missing = set(engine.REQUIRED) - set(self.history.columns)
+        if missing:
+            raise ValueError(f"Dataset is missing required columns: {sorted(missing)}")
+        self.history["ward_id"] = self.history["ward_id"].astype(str).str.strip()
+        self.history = self.history.sort_values(["ward_id", "date"]).reset_index(drop=True)
 
-        self.wards = pd.read_csv(config.ROOT / "data" / "wards.csv")
-        self.history = pd.read_csv(config.DATASET_PATH, parse_dates=["date"])
-        self.history_max = self.history.date.max().normalize()
+        self.models: dict[int, dict[str, Any]] = {}
+        self._cache: dict[int, pd.DataFrame] = {}
+        for h in HORIZONS:
+            paths = {"regressor": model_dir / "regressors" / f"final_regressor_h{h}.joblib",
+                     "classifier": model_dir / "classifiers" / f"final_classifier_h{h}.joblib"}
+            for kind, p in paths.items():
+                if not p.is_file():
+                    raise FileNotFoundError(f"Missing H{h} {kind}: {p}")
+            loaded = {}
+            for kind, p in paths.items():
+                try:
+                    loaded[kind] = _load_model(p)
+                except Exception as exc:  # name the exact file and the real underlying error
+                    import traceback
+                    detail = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+                    raise RuntimeError(
+                        f"Could not load H{h} {kind} ({p.name}, {p.stat().st_size:,} bytes): {detail}\n"
+                        "Expected scikit-learn==1.6.1 and the xgboost version used for training."
+                    ) from exc
+            reg, clf = loaded["regressor"], loaded["classifier"]
+            # Raises if schemas differ from each other or from the 101-feature schema.
+            engine.validate_model_features(reg, clf)
+            self.models[h] = {"regressor": reg, "classifier": clf}
 
-        # Confirm that this engine can actually construct every feature required by
-        # every loaded model. This catches a genuine engine/model mismatch at startup.
-        _, available_features = engine.build_features(self.history.sort_values(["ward_id", "date"]).tail(20).copy())
-        available = set(available_features)
-        for h, bundle in self.models.items():
-            missing = [c for c in bundle["features"] if c not in available]
-            if missing:
-                raise ValueError(
-                    f"Feature-engine mismatch for {h}-week model ({bundle.get('feature_version')}): "
-                    f"engine cannot build {missing[:8]}"
-                )
+        self._features, _ = engine.build_features(self.history.copy())
+        self._features = self._features.sort_values(["ward_id", "date"]).reset_index(drop=True)
+        counts = self._features.groupby("ward_id").size()
+        if (counts < engine.MIN_HISTORY_WEEKS).any():
+            raise ValueError(f"Each ward needs >= {engine.MIN_HISTORY_WEEKS} weekly rows of history")
 
-        self.uses_forecast_features = any(self.model_forecast_features.values())
-        self._frames, self._stamp, self._cache = None, None, {}
-        self._lock = threading.RLock()
-
-    def ward_ids(self):
-        return self.wards.ward_id.tolist()
-
-    def frames(self):
-        """Historical dengue/weather rows + live weather rows through current forecast-completed week."""
-        payload, stale = weather.get_payload()
-        with self._lock:
-            return self._frames_locked(payload, stale)
-
-    def _frames_locked(self, payload, stale):
-        if payload["fetched_at"] != self._stamp:
-            weekly = weather.weekly_by_city(payload)
-            parts = [self.history.copy()]
-            live_parts = []
-            for w in self.wards.itertuples():
-                if w.city not in weekly:
-                    continue
-                city_week = weekly[w.city]
-                city_week = city_week[city_week.date > self.history_max].copy()
-                if city_week.empty:
-                    continue
-                city_week["ward_id"] = w.ward_id
-                city_week["city"] = w.city
-                city_week["population_density_sqkm"] = w.population_density_sqkm
-                city_week["water_logging_risk_index"] = w.water_logging_risk_index
-                city_week["sanitation_score"] = w.sanitation_score
-                city_week["dengue_cases"] = float("nan")  # unknown in real time; never fabricate case reports
-                live_parts.append(city_week)
-            if not live_parts:
-                raise weather.WeatherUnavailable("No complete live weather week available for model input")
-            parts.append(pd.concat(live_parts, ignore_index=True))
-            combined = pd.concat(parts, ignore_index=True, sort=False)
-            combined["date"] = pd.to_datetime(combined.date)
-            combined = combined.sort_values(["ward_id", "date"]).drop_duplicates(["ward_id", "date"], keep="last")
-            # Forecast features are populated only if at least one loaded model
-            # was actually trained with them. v2 models remain strictly historical.
-            fwd_cols = list(getattr(engine, "FWD_COLS", []))
-            for col in fwd_cols:
-                combined[col] = float("nan")
-            if self.uses_forecast_features and fwd_cols:
-                nxt = weather.next_week_forecast(payload)
-                live_mask = combined.dengue_cases.isna()
-                latest_live = combined.loc[live_mask].groupby("ward_id").date.transform("max")
-                newest = live_mask & combined.date.eq(latest_live.reindex(combined.index))
-                for col in fwd_cols:
-                    if any(col in cols for cols in self.model_forecast_features.values()):
-                        combined.loc[newest, col] = combined.loc[newest, "city"].map(
-                            lambda c: nxt.get(c, {}).get(col, float("nan")))
-            # Each ward needs its complete historical sequence and current weather row.
-            self._frames = combined.reset_index(drop=True)
-            self._stamp, self._cache = payload["fetched_at"], {}
-        meta = {
-            "fetched_at_utc": pd.Timestamp(self._stamp, unit="s", tz="UTC").isoformat(),
-            "stale": stale,
-            "source": payload.get("source", "Open-Meteo"),
-            "forecast_days_available": payload.get("forecast_days_available", 16),
-            "historical_dataset_through": str(self.history_max.date()),
-            "live_weather_week": str(self._frames[self._frames.dengue_cases.isna()].date.max().date()),
-        }
-        return self._frames, meta
-
-    def _weather_context(self, city, h=None):
-        """Return current live weather and the provider's actual forward forecast for a city.
-
-        The ML model uses the forecast-completed current week plus historical lag context.
-        Future daily forecasts are exposed to the UI/chatbot, but are not falsely injected
-        into a model trained without historical forecast snapshots.
-        """
-        payload, stale = weather.get_payload()
-        weekly = weather.weekly_by_city(payload).get(city)
-        if weekly is None or weekly.empty:
-            raise weather.WeatherUnavailable(f"No complete current weather week for {city}")
-
-        current = weekly.sort_values("date").iloc[-1].to_dict()
-        current["date"] = pd.Timestamp(current["date"]).strftime("%Y-%m-%d")
-        current["forecast_days"] = int(current.get("forecast_days", 0))
-
-        fetched = pd.Timestamp(float(payload["fetched_at"]), unit="s", tz="UTC").isoformat()
-        forecast = weather.forecast_daily(payload, city)
-        return {
-            "city": city,
-            "provider": payload.get("source", "Open-Meteo"),
-            "fetched_at_utc": fetched,
-            "stale_cache": bool(stale),
-            "forecast_days_available": int(payload.get("forecast_days_available", 16)),
-            "current_week_weather": current,
-            "daily_forecast": forecast,
-            "model_weather_input": (
-                ("The loaded model uses historical weather plus the next-week Open-Meteo forecast "
-                 "for its saved forecast features. Future daily forecast values are displayed separately."
-                 if (self.model_forecast_features.get(h, []) if h is not None else self.uses_forecast_features) else
-                 "The loaded model uses historical/current-week weather features only. "
-                 "Future daily forecasts are displayed separately and are not model inputs.")
-            ),
-        }
-
-    def _all(self, h):
-        f, meta = self.frames()
-        with self._lock:
-            if ("all", h) not in self._cache:
-                # Only the newest 12 weeks per ward are needed (max lag 8 + rolling 8); identical output, ~10x faster.
-                recent = f.sort_values(["ward_id", "date"]).groupby("ward_id").tail(12)
-                scored = engine.score_rows(recent, self.models[h])
-                latest = scored.sort_values("date").groupby("ward_id", as_index=False).tail(1)
-                self._cache[("all", h)] = latest.set_index("ward_id")
-            return self._cache[("all", h)], meta
+        # Documented assumption: dataset has no bed-capacity column (see operations.py).
+        self.bed_capacity = operations.estimate_bed_capacity(
+            self.history.groupby("ward_id")["hospital_beds_required"].apply(list).to_dict()
+        ) if "hospital_beds_required" in self.history.columns else {}
 
     @staticmethod
-    def _row(r, ward_id):
+    def _risk_label(value: Any) -> str:
+        if hasattr(value, "item"):
+            value = value.item()
+        if isinstance(value, str):
+            value = value.strip().lower()
+        return RISK_LABELS.get(value, "Unknown")
+
+    def _predict_horizon(self, horizon: int) -> pd.DataFrame:
+        if horizon not in self.models:
+            raise ValueError("Horizon must be 2, 3, or 4 weeks")
+        if horizon in self._cache:
+            return self._cache[horizon].copy()
+
+        m = self.models[horizon]
+        features = list(m["regressor"].feature_names_in_)
+        latest = self._features.groupby("ward_id", sort=True).tail(1).copy()
+        X = latest[features]
+        if X.isna().any().any():
+            raise ValueError(f"Missing values in model inputs: {X.columns[X.isna().any()].tolist()[:8]}")
+
+        cases = np.maximum(np.asarray(m["regressor"].predict(X), dtype=float), 0.0)
+        proba = np.asarray(m["classifier"].predict_proba(X), dtype=float)  # one batch call
+        classes = list(m["classifier"].classes_)
+        labels = [self._risk_label(c) for c in classes]
+
+        latest["expected_cases"] = np.round(cases, 2)
+        latest["risk_tier"] = [labels[i] for i in proba.argmax(axis=1)]
+        for t in TIERS:
+            col = np.zeros(len(latest))
+            for i, lab in enumerate(labels):
+                if lab == t:
+                    col = proba[:, i]
+            latest[f"p_{t.lower()}"] = np.round(col, 4)
+        latest["horizon_weeks"] = horizon
+        latest["origin_week"] = latest["date"]
+        latest["forecast_week"] = latest["date"] + pd.to_timedelta(horizon * 7, unit="D")
+        latest = latest.reset_index(drop=True)
+        self._cache[horizon] = latest
+        return latest.copy()
+
+    @staticmethod
+    def _public_row(row: Any) -> dict[str, Any]:
         return {
-            "ward_id": ward_id, "city": r.city, "risk_tier": r.risk_tier,
-            "expected_cases": round(max(0.0, float(r.expected_cases)), 2),
-            "probabilities": {t: round(float(r[f"p_{t}"]), 4) for t in engine.TIERS},
+            "ward_id": str(row.ward_id), "city": str(row.city),
+            "risk_tier": str(row.risk_tier), "expected_cases": float(row.expected_cases),
+            "probabilities": {"Low": float(row.p_low), "Medium": float(row.p_medium),
+                              "High": float(row.p_high), "Critical": float(row.p_critical)},
+            "population_density_sqkm": float(row.population_density_sqkm),
         }
 
-    def predict_all(self, h, city=None):
-        scored, meta = self._all(h)
-        rows = [self._row(r, ward_id) for ward_id, r in scored.iterrows() if city is None or r.city == city]
-        if not rows:
-            raise KeyError(city or "No wards available")
-        origin = scored.date.max()
-        cities = sorted({r["city"] for r in rows})
-        weather_contexts = {name: self._weather_context(name, h) for name in cities}
-        return {"horizon_weeks": h, "origin_week": str(origin.date()),
-                "forecast_week": str((origin + pd.Timedelta(weeks=h)).date()),
-                "weather": meta, "weather_contexts": weather_contexts,
-                "count": len(rows), "wards": rows}
-
-    def drivers(self, ward_id, h):
-        f, _ = self.frames()
-        fw = f[f.ward_id == ward_id].sort_values("date").tail(12).copy()  # 12 weeks cover all lag/rolling windows
-        ward = self.wards.set_index("ward_id").loc[ward_id]
-        base = engine.score_rows(fw, self.models[h]).iloc[-1].expected_cases
-        n = len(fw)
-        scenarios = {
-            "Rainfall (last 9 weeks)": fw.assign(rainfall_mm=[0.0 if i >= n - 9 else v for i, v in enumerate(fw.rainfall_mm)]),
-            "Temperature": fw.assign(avg_temp_c=ward.clim_avg_temp_c, max_temp_c=ward.clim_max_temp_c, min_temp_c=ward.clim_min_temp_c),
-            "Humidity": fw.assign(relative_humidity_pct=ward.clim_humidity_pct),
-        }
-        forecast_cols = self.model_forecast_features.get(h, [])
-        if forecast_cols:
-            scenarios["Next-week forecast"] = fw.assign(**{c: float("nan") for c in forecast_cols})
-        return [{"driver": name, "change_in_expected_cases": round(float(base - engine.score_rows(data, self.models[h]).iloc[-1].expected_cases), 3)}
-                for name, data in scenarios.items()]
-
-    def _coverage(self, city, origin, h, used):
-        """State exactly what part of the prediction window real forecast weather covers."""
-        payload, _ = weather.get_payload()
-        # weather.py exposes forecast_daily(), not forecast_last_date().
-        # Derive the provider's actual last forecast day from the returned records.
-        daily = weather.forecast_daily(payload, city)
-        last = max((row.get("date") for row in daily if row.get("date")), default=None)
-        target_start = origin + pd.Timedelta(weeks=h)
-        target_end = target_start + pd.Timedelta(days=6)
-        covered = bool(last is not None and pd.Timestamp(last) >= target_end)
+    def predict_all(self, horizon: int = 2, city: str | None = None) -> dict[str, Any]:
+        pred = self._predict_horizon(int(horizon))
+        if city:
+            pred = pred[pred["city"].astype(str).str.casefold() == city.strip().casefold()]
+        if pred.empty:
+            raise KeyError(f"No ward predictions for city: {city}")
+        rows = [self._public_row(r) for r in pred.itertuples(index=False)]
+        origin = pd.to_datetime(pred["origin_week"]).max()
         return {
-            "weather_forecast_through": str(last) if last else None,
-            "target_week": f"{target_start.date()} to {target_end.date()}",
-            "target_week_covered_by_weather_forecast": covered,
-            "forecast_week_used_by_model": (
-                f"{(origin + pd.Timedelta(weeks=1)).date()} to {(origin + pd.Timedelta(days=13)).date()}"
-                if used else None
-            ),
-            "forecast_features_used": used,
-            "statement": (
-                "This model uses historical/current-week weather and the real next-week forecast as trained features."
-                if used else
-                "This model was trained without next-week forecast features, so the prediction uses historical/current-week weather only."
-            )}
+            "horizon_weeks": int(horizon),
+            "origin_week": str(origin.date()),
+            "forecast_week": str((origin + pd.Timedelta(weeks=int(horizon))).date()),
+            "dataset_through": str(self.history["date"].max().date()),
+            "source": "Phase 2 historical dengue dataset (local models)",
+            "count": len(rows),
+            "wards": rows,
+        }
 
-    def predict_ward(self, ward_id, h):
-        if ward_id not in set(self.wards.ward_id):
-            raise KeyError(ward_id)
-        scored, meta = self._all(h)
-        key = ("ward", ward_id, h)
-        with self._lock:
-            if key not in self._cache:
-                fw = self._frames[self._frames.ward_id == ward_id].sort_values("date").tail(8)
-                self._cache[key] = (
-                    self.drivers(ward_id, h),
-                    fw[["date", "rainfall_mm", "avg_temp_c", "relative_humidity_pct"]]
-                    .assign(date=lambda x: x.date.dt.strftime("%Y-%m-%d")).round(1).to_dict("records"),
-                )
-            drivers, recent = self._cache[key]
-        r = scored.loc[ward_id]
-        return {**self._row(r, ward_id), "horizon_weeks": h,
-                "origin_week": str(r.date.date()), "forecast_week": str(r.forecast_week.date()),
-                "drivers": drivers, "recent_weather": recent, "weather": meta,
-                "weather_context": self._weather_context(r.city, h), "note": NOTE,
-                "forecast_coverage": self._coverage(
-                    r.city, r.date, h,
-                    bool(self.model_forecast_features.get(h)) and
-                    bool(self._frames[self._frames.ward_id == ward_id].sort_values("date").tail(1)[self.model_forecast_features[h]].notna().all(axis=None))
-                )}
+    def predict_ward(self, ward_id: str, horizon: int = 2) -> dict[str, Any]:
+        pred = self._predict_horizon(int(horizon))
+        hit = pred[pred["ward_id"].astype(str) == str(ward_id).strip()]
+        if hit.empty:
+            raise KeyError(f"Ward not found: {ward_id}")
+        row = hit.iloc[0]
+        out = self._public_row(row)
+        out.update({
+            "horizon_weeks": int(horizon),
+            "origin_week": str(pd.Timestamp(row["origin_week"]).date()),
+            "forecast_week": str(pd.Timestamp(row["forecast_week"]).date()),
+            "dataset_through": str(self.history["date"].max().date()),
+        })
+        return out
+
+    def allocate_resources(self, horizon: int = 2, city: str | None = None,
+                           available_regional_stock_pct: float = 100.0,
+                           total_spraying_crews: int = 0) -> dict[str, Any]:
+        pred = self.predict_all(horizon, city)
+        alloc = operations.allocate_resources(
+            pred["wards"], available_regional_stock_pct=available_regional_stock_pct,
+            total_spraying_crews=total_spraying_crews)
+        return {"horizon_weeks": int(horizon), "forecast_week": pred["forecast_week"],
+                "source": pred["source"], "allocation": alloc}
+
+    def route_overflow(self, horizon: int = 2, city: str | None = None,
+                       available_regional_stock_pct: float = 100.0,
+                       total_spraying_crews: int = 0,
+                       capacity_overrides: dict[str, int] | None = None) -> dict[str, Any]:
+        """Allocation + same-city overflow routing (capacity = estimate unless overridden)."""
+        base = self.allocate_resources(horizon, city, available_regional_stock_pct, total_spraying_crews)
+        wards = base["allocation"]["wards"]
+        ids = {w["ward_id"] for w in wards}
+        capacity = {k: v for k, v in self.bed_capacity.items() if k in ids}
+        capacity.update({str(k): v for k, v in (capacity_overrides or {}).items() if str(k) in ids})
+        base["overflow"] = operations.route_hospital_overflow(wards, capacity)
+        base["bed_capacity_source"] = "historical 90th-percentile estimate; operator overrides applied"
+        return base
+
+    def dispatch(self, horizon: int = 2, city: str | None = None,
+                 available_regional_stock_pct: float = 100.0, total_spraying_crews: int = 0,
+                 capacity_overrides: dict[str, int] | None = None) -> dict[str, Any]:
+        """SMS / WhatsApp / HTML brief payload for every ward."""
+        r = self.route_overflow(horizon, city, available_regional_stock_pct,
+                                total_spraying_crews, capacity_overrides)
+        return operations.build_dispatch_payload(
+            r["allocation"], int(horizon), r["forecast_week"], r["overflow"])
+
+    def simulate(self, total_crews: int = 0, deployments: dict[str, int] | None = None,
+                 city: str | None = None, capacity_overrides: dict[str, int] | None = None,
+                 params: dict[str, float] | None = None) -> dict[str, Any]:
+        """Vector-control what-if: model-driven counterfactual over weeks 2-4."""
+        latest = self._features.groupby("ward_id", sort=True).tail(1)
+        if latest[list(engine.FEATURE_COLUMNS)].isna().any().any():
+            raise ValueError("Missing values in model inputs")
+        cap = dict(self.bed_capacity)
+        cap.update({str(k): v for k, v in (capacity_overrides or {}).items()})
+        out = simulator.simulate(latest, {h: self.models[h]["regressor"] for h in HORIZONS},
+                                 total_crews, deployments, city, cap, params)
+        out["origin_week"] = str(latest["date"].max().date())
+        return out
+
+    def available_wards(self) -> list[dict[str, str]]:
+        w = self.history[["ward_id", "city"]].drop_duplicates().sort_values(["city", "ward_id"])
+        return [{"ward_id": str(r.ward_id), "city": str(r.city)} for r in w.itertuples(index=False)]
