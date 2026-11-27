@@ -93,3 +93,49 @@ def chat(message, session_id, ward_id=None, horizon_weeks=None):
     if horizon_weeks:
         body["horizon_weeks"] = horizon_weeks
     return _call("POST", "/chat", body=body, timeout=CHAT_TIMEOUT, need=("reply",))
+
+
+# ------------------------------------------------------------------ Phase 2 operations (offline backend)
+def _raw(path, params):
+    try:
+        resp = _session.get(BASE_URL + path, params=params, timeout=TIMEOUT)
+    except requests.exceptions.RequestException as exc:
+        raise ApiError(f"Cannot reach the backend: {type(exc).__name__}", kind="offline")
+    if not resp.ok:
+        raise ApiError(_detail(resp) or f"Backend returned HTTP {resp.status_code}.", status=resp.status_code)
+    return resp
+
+
+def ops_meta():
+    return _call("GET", "/ops/meta", need=("origin_weeks",))
+
+
+def ops_allocation(horizon_weeks, stock_pct, crews, origin_week=None, scope="region"):
+    p = {"horizon_weeks": horizon_weeks, "stock_pct": stock_pct, "crews": crews, "scope": scope}
+    return _call("GET", "/ops/allocation", params={**p, **({"origin_week": origin_week} if origin_week else {})},
+                 need=("wards", "totals"))
+
+
+def ops_overflow(horizon_weeks, origin_week=None, capacity_factor=1.0):
+    p = {"horizon_weeks": horizon_weeks, "capacity_factor": capacity_factor}
+    return _call("GET", "/ops/overflow", params={**p, **({"origin_week": origin_week} if origin_week else {})},
+                 need=("wards", "cities", "transfers"))
+
+
+def ops_simulate(deployments, origin_week=None):
+    return _call("POST", "/ops/simulate", body={"deployments": deployments, "origin_week": origin_week},
+                 need=("totals_by_horizon",))
+
+
+def ops_roi(crews_per_ward=1, origin_week=None):
+    p = {"crews_per_ward": crews_per_ward, **({"origin_week": origin_week} if origin_week else {})}
+    return _call("GET", "/ops/roi", params=p, need=("roi_ranking",))
+
+
+def ops_dispatch(fmt, params):
+    """fmt json returns dict; sms/whatsapp/html return text; pdf returns bytes."""
+    params = {k: v for k, v in {**params, "format": fmt}.items() if v not in (None, "")}
+    if fmt == "json":
+        return _call("GET", "/ops/dispatch", params=params, need=("notices",))
+    resp = _raw("/ops/dispatch", params)
+    return resp.content if fmt == "pdf" else resp.text

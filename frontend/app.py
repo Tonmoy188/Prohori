@@ -21,7 +21,7 @@ TIER_RANK = {t: i for i, t in enumerate(TIERS)}
 TIER_COLOR = {"Low": "#2E9B5F", "Medium": "#E8B800", "High": "#F08A24", "Critical": "#D64545"}
 HORIZONS = (2, 3, 4)
 PAGES = [("Home", "home"), ("Overview", "dashboard"), ("Ward Explorer", "location_city"),
-         ("Weather Outlook", "cloud"), ("Prediction Details", "monitoring"), ("AI Assistant", "smart_toy"),
+         ("Weather Outlook", "cloud"), ("Prediction Details", "monitoring"), ("Operations", "local_shipping"), ("AI Assistant", "smart_toy"),
          ("Model Performance", "analytics"), ("About & Resources", "info")]
 SUGGESTIONS = ["Which wards have the highest estimated risk in the 3-week outlook?",
                "How is the weather affecting dengue risk right now?",
@@ -1023,6 +1023,87 @@ def page_about():
             st.link_button("Open-Meteo", "https://open-meteo.com/")
         st.button("View model performance", key="about_perf", on_click=go_to, args=("Model Performance",))
 
+def page_ops():
+    head("Response Operations", "Supplies, hospital overflow, crew deployment and dispatch notices. Runs fully offline.")
+    meta = need(api.ops_meta)
+    ow = meta["origin_weeks"]
+    c1, c2, c3, c4 = st.columns([1.2, 1, 1, 1])
+    origin = c1.date_input("Forecast origin week", value=pd.Timestamp(ow["latest"]).date(),
+                           min_value=pd.Timestamp(ow["first"]).date(), max_value=pd.Timestamp(ow["latest"]).date(),
+                           help="Newest reported case week by default. Add weekly reports via POST /ops/case-reports.")
+    origin = str(origin)
+    with c2:
+        h = horizon_picker("ops_h")
+    stock = c3.slider("Regional stock available (%)", 30, 100, 100, 5)
+    crews = c4.number_input("Spraying crews available", 0, 500, 20, 1)
+    try:
+        alloc = api.ops_allocation(h, stock, crews, origin)
+        routing = api.ops_overflow(h, origin)
+    except api.ApiError as exc:
+        note(exc.message, "warn")
+        return
+    t = alloc["totals"]
+    def res(key, label):
+        r = t[key]
+        return (label, f'{r["allocated"]:,} / {r["required"]:,}', f'Deficit {r["deficit"]:,}', "Critical" if r["deficit"] else "Low")
+    kpis([("Target week", fmt_date(alloc["target_week"]), f"{h}-week forecast from {fmt_date(origin)}", ""),
+          res("saline_bags_needed", "Saline bags"), res("diagnostic_kits_needed", "Diagnostic kits"),
+          res("hospital_beds_required", "Hospital beds"),
+          ("Spraying crews", f'{t["spraying_crews"]["assigned"]} / {t["spraying_crews"]["required"]}', "Assigned / needed", "Medium")])
+    if alloc["critical_deficit_warnings"]:
+        note(f'{len(alloc["critical_deficit_warnings"])} wards in CRITICAL DEFICIT: '
+             + "; ".join(alloc["critical_deficit_warnings"][:5]), "warn")
+    tabs = st.tabs(["Allocation", "Hospital overflow", "Crew simulator", "Dispatch"])
+    with tabs[0], card("ops_alloc"):
+        ctitle("Ward allocation (allocated / required)", "Priority = risk tier x population density x expected cases.")
+        df = pd.DataFrame(alloc["wards"])
+        cols = ["ward_id", "city", "risk_tier", "expected_cases", "priority_score", "saline_bags_needed",
+                "saline_bags_needed_allocated", "diagnostic_kits_needed", "diagnostic_kits_needed_allocated",
+                "hospital_beds_required", "hospital_beds_required_allocated", "crews_required", "crews_assigned",
+                "supply_status"]
+        st.dataframe(df[[c for c in cols if c in df]], hide_index=True, width="stretch")
+    with tabs[1], card("ops_beds"):
+        ctitle("City bed utilization", routing["capacity_source"])
+        st.dataframe(pd.DataFrame(routing["cities"]).T, width="stretch")
+        ctitle("Same-city transfers")
+        st.dataframe(pd.DataFrame(routing["transfers"]), hide_index=True, width="stretch")
+        st.dataframe(pd.DataFrame(routing["wards"]), hide_index=True, width="stretch")
+    with tabs[2], card("ops_sim"):
+        ctitle("What-if crew deployment", "Cases prevented over the next 2-4 weeks, from re-running the local models.")
+        wl = [w["ward_id"] for w in alloc["wards"]]
+        picks = st.multiselect("Wards to treat", wl, default=wl[:3])
+        k = st.slider("Crews per selected ward", 1, meta["simulator_assumptions"]["max_crews_per_ward"], 2)
+        if picks:
+            sim = api.ops_simulate({w: k for w in picks}, origin)
+            st.dataframe(pd.DataFrame(sim["totals_by_horizon"]).T.rename_axis("horizon_weeks"), width="stretch")
+            st.dataframe(pd.DataFrame(sim["roi_ranking"]), hide_index=True, width="stretch")
+        ctitle("ROI ranking: all wards, 1 crew each")
+        roi = api.ops_roi(1, origin)
+        st.dataframe(pd.DataFrame(roi["roi_ranking"]).head(15), hide_index=True, width="stretch")
+    with tabs[3], card("ops_dispatch"):
+        ctitle("Dispatch notices", "Generated from fixed templates; no LLM or internet needed.")
+        a, b = st.columns(2)
+        city = a.selectbox("City", ["All cities"] + sorted({w["city"] for w in alloc["wards"]}), key="ops_city")
+        alerts = b.checkbox("Only wards with deficits", value=False)
+        params = {"horizon_weeks": h, "stock_pct": stock, "crews": crews, "origin_week": origin,
+                  "city": None if city == "All cities" else city, "only_alerts": alerts}
+        try:
+            sms = api.ops_dispatch("sms", params)
+            wa = api.ops_dispatch("whatsapp", params)
+            html_doc = api.ops_dispatch("html", params)
+            pdf = api.ops_dispatch("pdf", params)
+        except api.ApiError as exc:
+            note(exc.message, "warn")
+            return
+        x, y = st.columns(2)
+        x.text_area("SMS (160 chars each)", sms, height=260)
+        y.text_area("WhatsApp", wa, height=260)
+        d1, d2, d3, d4 = st.columns(4)
+        d1.download_button("SMS .txt", sms, "sms_alerts.txt")
+        d2.download_button("WhatsApp .txt", wa, "whatsapp_alerts.txt")
+        d3.download_button("Brief .html", html_doc, "dispatch_brief.html", mime="text/html")
+        d4.download_button("Brief .pdf", pdf, "dispatch_brief.pdf", mime="application/pdf")
+
 
 {"Home": page_home, "Overview": page_overview, "Ward Explorer": page_wards, "Weather Outlook": page_weather, "Prediction Details": page_prediction,
- "AI Assistant": page_chat, "Model Performance": page_performance, "About & Resources": page_about}[ss.page]()
+ "Operations": page_ops, "AI Assistant": page_chat, "Model Performance": page_performance, "About & Resources": page_about}[ss.page]()
