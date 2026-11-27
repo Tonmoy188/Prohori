@@ -1,144 +1,225 @@
-"""FastAPI backend. Run: python -m uvicorn main:app --reload"""
-from typing import Optional
+"""DengueWatch Phase 2 FastAPI app. Core endpoints are 100% local (no network, no LLM)."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 import config
+import operations
 import weather
-from chat import ChatConfigurationError, ChatRateLimited, ChatService
 from service import Service
 
-app = FastAPI(title="Dengue live early-warning API", version="2.0")
-app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
-svc = Service()
-bot = ChatService(svc)
+app = FastAPI(title="DengueWatch Phase 2 API", version="2.1.0",
+              description="Forecasting, constrained allocation, overflow routing, "
+                          "vector-control simulation and dispatch. Fully offline-capable.")
+app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_credentials=False,
+                   allow_methods=["*"], allow_headers=["*"])
+
+service = Service()
+EXPORT_DIR = Path(__file__).resolve().parent / "exports"
+_chat = None  # optional LLM assistant, created lazily; never used by core endpoints
 
 
-def guard(fn, *args, **kwargs):
-    try:
-        return fn(*args, **kwargs)
-    except KeyError as exc:
-        raise HTTPException(404, f"Unknown ward/city: {exc}")
-    except weather.WeatherUnavailable as exc:
-        raise HTTPException(503, f"Live weather unavailable: {exc}")
+class _Ops(BaseModel):
+    horizon_weeks: int = Field(default=2, ge=2, le=4)
+    city: Optional[str] = None
+    available_regional_stock_pct: float = Field(default=100.0, ge=30, le=100)
+    total_spraying_crews: int = Field(default=0, ge=0, le=10000)
 
 
-class ChatIn(BaseModel):
+class AllocationRequest(_Ops):
+    pass
+
+class OverflowRequest(_Ops):
+    bed_capacity_overrides: Dict[str, int] = Field(default_factory=dict)
+
+
+class SimulateRequest(BaseModel):
+    total_crews: int = Field(default=10, ge=0, le=10000)
+    city: Optional[str] = None
+    deployments: Optional[Dict[str, int]] = None  # ward_id -> crews; omitted = auto (greedy by ROI)
+    bed_capacity_overrides: Dict[str, int] = Field(default_factory=dict)
+    effect_per_crew: Optional[float] = Field(default=None, gt=0, lt=1)
+    max_effect: Optional[float] = Field(default=None, gt=0, le=1)
+
+
+class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=300)
+    session_id: str = Field(default="default", pattern=r"^[A-Za-z0-9_-]{1,64}$")
     ward_id: Optional[str] = None
-    horizon_weeks: Optional[int] = Field(None, ge=2, le=4)
-    session_id: str = Field("default", pattern=r"^[A-Za-z0-9_\-]{1,64}$")
+    horizon_weeks: Optional[int] = Field(default=None, ge=2, le=4)
+
+
+def _city(city: Optional[str]) -> Optional[str]:
+    if city is None or not city.strip():
+        return None
+    name = operations.ALLOWED_CITIES.get(city.strip().casefold())
+    if name is None:
+        raise HTTPException(404, f"Unknown city: {city}. Allowed: {sorted(operations.ALLOWED_CITIES.values())}")
+    return name
+
+
+def run(fn, *a, **k):
+    try:
+        return fn(*a, **k)
+    except KeyError as exc:
+        raise HTTPException(404, f"Not found: {exc}") from exc
+    except ValueError as exc:  # includes operations/simulator validation errors
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.get("/")
 def root():
-    return {"service": app.title, "docs": "/docs", "health": "/health"}
+    return {"service": "DengueWatch Phase 2", "status": "running", "docs": "/docs", "health": "/health"}
+
+
+def _chat_status() -> str:
+    if not config.GEMINI_API_KEY:
+        return "local template only (no GEMINI_API_KEY)"
+    return "local template only (offline switch on)" if weather.is_offline() else "gemini enabled (template fallback)"
 
 
 @app.get("/health")
 def health():
-    return {
-        "status": "ok",  # prediction works without the optional chatbot key
-        "models": {str(h): {"trained_through": svc.models[h].get("trained_through"),
-                            "training_rows": svc.models[h].get("training_rows")} for h in config.HORIZONS},
-        "wards": len(svc.wards),
-        "weather_provider": "Open-Meteo Forecast + Archive API (real data; no key required)",
-        "chatbot": "Gemini API configured" if bot.client else "disabled: add GEMINI_API_KEY to .env",
-    }
+    return {"status": "ok", "loaded_horizons": sorted(service.models), "wards": len(service.available_wards()),
+            "dataset_rows": len(service.history), "dataset_through": str(service.history["date"].max().date()),
+            "offline_mode": weather.is_offline(), "core_requires_internet": False,
+            "chatbot": _chat_status()}
 
 
 @app.get("/wards")
-def wards():
-    return {"count": len(svc.wards), "wards": svc.wards[["ward_id", "city"]].to_dict("records")}
+def get_wards():
+    w = service.available_wards()
+    return {"count": len(w), "wards": w}
 
 
-@app.get("/weather/forecast")
-def weather_forecast(city: Optional[str] = None):
-    payload, stale = guard(weather.get_payload)
-    if city and city not in weather.CITIES:
-        raise HTTPException(404, f"Unknown city: {city}")
-    return {"source": payload.get("source"), "fetched_at_utc": __import__("datetime").datetime.fromtimestamp(
-        payload["fetched_at"], tz=__import__("datetime").timezone.utc).isoformat(),
-        "stale_cache": stale, "provider_forecast_days": payload.get("forecast_days_available", 16),
-        "daily_forecast": weather.forecast_daily(payload, city)}
-
-
-@app.get("/weather")
-def live_weather(city: Optional[str] = None):
-    frames, meta = guard(svc.frames)
-    data = frames[frames.dengue_cases.isna()].copy()
-    if city:
-        data = data[data.city == city]
-        if data.empty:
-            raise HTTPException(404, "Unknown city")
-    columns = ["city", "ward_id", "date", "rainfall_mm", "avg_temp_c", "max_temp_c", "min_temp_c", "relative_humidity_pct"]
-    # Return the latest eight live weeks per ward. Older observations remain in the
-    # model's internal lag history, but are not mislabeled as the current forecast.
-    recent = (data.sort_values("date").groupby("ward_id", group_keys=False).tail(8))
-    latest = data.sort_values("date").groupby("ward_id", group_keys=False).tail(1)
-    forecast_context = {}
-    for name in sorted(data.city.unique()):
-        payload, stale = guard(weather.get_payload)
-        forecast_context[name] = {
-            "provider": payload.get("source", "Open-Meteo"),
-            "fetched_at_utc": __import__("datetime").datetime.fromtimestamp(
-                payload["fetched_at"], tz=__import__("datetime").timezone.utc).isoformat(),
-            "stale_cache": stale,
-            "daily_forecast": weather.forecast_daily(payload, name),
-        }
-    return {
-        "weather": meta,
-        "current_week_by_ward": latest[columns].assign(
-            date=lambda x: x.date.dt.strftime("%Y-%m-%d")).round(2).to_dict("records"),
-        "recent_live_weekly_weather": recent[columns].assign(
-            date=lambda x: x.date.dt.strftime("%Y-%m-%d")).round(2).to_dict("records"),
-        # Backward-compatible key for existing dashboards; now limited to the latest eight weeks.
-        "live_weekly_weather": recent[columns].assign(
-            date=lambda x: x.date.dt.strftime("%Y-%m-%d")).round(2).to_dict("records"),
-        "forecast_by_city": forecast_context,
-    }
+@app.get("/cities")
+def get_cities():
+    c = sorted({w["city"] for w in service.available_wards()})
+    return {"count": len(c), "cities": c}
 
 
 @app.get("/predict")
-def predict(ward_id: str, horizon_weeks: int = Query(3, ge=2, le=4)):
-    return guard(svc.predict_ward, ward_id, horizon_weeks)
+def predict_ward(ward_id: str, horizon_weeks: int = Query(default=2, ge=2, le=4)):
+    return run(service.predict_ward, ward_id, horizon_weeks)
+
+
+@app.get("/predict/all")
+def predict_all(horizon_weeks: int = Query(default=2, ge=2, le=4), city: Optional[str] = None):
+    return run(lambda: service.predict_all(horizon_weeks, _city(city)))
 
 
 @app.get("/outlook")
 def outlook(ward_id: str):
-    return {"ward_id": ward_id, "horizons": [guard(svc.predict_ward, ward_id, h) for h in config.HORIZONS]}
+    return {"ward_id": ward_id, "forecasts": [run(service.predict_ward, ward_id, h) for h in (2, 3, 4)]}
 
 
-@app.get("/predict/all")
-def predict_all(horizon_weeks: int = Query(3, ge=2, le=4), city: Optional[str] = None):
-    return guard(svc.predict_all, horizon_weeks, city)
+def _ops_kwargs(b: _Ops) -> dict:
+    return dict(horizon=b.horizon_weeks, city=_city(b.city),
+                available_regional_stock_pct=b.available_regional_stock_pct,
+                total_spraying_crews=b.total_spraying_crews)
+
+
+@app.post("/operations/allocate")
+def allocate(body: AllocationRequest):
+    return run(lambda: service.allocate_resources(**_ops_kwargs(body)))
+
+
+@app.post("/operations/overflow")
+def overflow(body: OverflowRequest):
+    return run(lambda: service.route_overflow(**_ops_kwargs(body), capacity_overrides=body.bed_capacity_overrides))
+
+
+@app.post("/operations/simulate")
+def simulate(body: SimulateRequest):
+    params = {k: v for k, v in (("effect_per_crew", body.effect_per_crew),
+                                ("max_effect", body.max_effect)) if v is not None}
+    return run(lambda: service.simulate(body.total_crews, body.deployments, _city(body.city),
+                                        body.bed_capacity_overrides, params))
+
+
+@app.post("/operations/dispatch")
+def dispatch(body: OverflowRequest):
+    d = run(lambda: service.dispatch(**_ops_kwargs(body), capacity_overrides=body.bed_capacity_overrides))
+    return {k: v for k, v in d.items() if k != "html_brief"}
+
+
+@app.post("/operations/dispatch/html", response_class=HTMLResponse)
+def dispatch_html(body: OverflowRequest):
+    return run(lambda: service.dispatch(**_ops_kwargs(body), capacity_overrides=body.bed_capacity_overrides))["html_brief"]
+
+
+@app.post("/operations/dispatch/export")
+def dispatch_export(body: OverflowRequest):
+    d = run(lambda: service.dispatch(**_ops_kwargs(body), capacity_overrides=body.bed_capacity_overrides))
+    tag = (_city(body.city) or "all_cities").lower().replace(" ", "_") + f"_h{body.horizon_weeks}w"
+    EXPORT_DIR.mkdir(exist_ok=True)
+    sep = "\n" + "=" * 60 + "\n"
+    files = {f"sms_{tag}.txt": sep.join(m["sms"] for m in d["ward_messages"]),
+             f"whatsapp_{tag}.txt": sep.join(m["whatsapp"] for m in d["ward_messages"]),
+             f"commissioner_brief_{tag}.html": d["html_brief"]}
+    for name, text in files.items():
+        (EXPORT_DIR / name).write_text(text, encoding="utf-8")
+    return {"exported": [f"exports/{n}" for n in files], "wards": len(d["ward_messages"])}
+
+@app.get("/weather")
+def get_weather():
+    return weather.weather_context()  # live Open-Meteo if online, deterministic local fallback otherwise
+
+
+@app.post("/weather/offline/{state}")
+def weather_offline(state: str):
+    if state.lower() not in ("on", "off"):
+        raise HTTPException(422, "state must be 'on' or 'off'")
+    weather.set_offline(state.lower() == "on")
+    return {"offline_mode": weather.is_offline()}
+
+
+def _template_reply(req: ChatRequest) -> str:
+    """Deterministic, no-LLM answer used when the Gemini assistant is unavailable/offline."""
+    h = req.horizon_weeks or 2
+    if req.ward_id:
+        p = service.predict_ward(req.ward_id, h)
+        return (f"{p['ward_id']} ({p['city']}): model estimate {p['expected_cases']:.1f} cases, risk "
+                f"{p['risk_tier']}, for week of {p['forecast_week']} ({h}-week horizon).")
+    a = service.predict_all(h)
+    top = sorted(a["wards"], key=lambda w: -w["expected_cases"])[:3]
+    return (f"Top model-estimated wards for week of {a['forecast_week']}: "
+            + "; ".join(f"{w['ward_id']} {w['expected_cases']:.1f} cases ({w['risk_tier']})" for w in top) + ".")
 
 
 @app.post("/chat")
-def chat(body: ChatIn):
-    try:
-        return bot.ask(body.message, body.session_id, body.ward_id, body.horizon_weeks)
-    except ChatConfigurationError as exc:
-        raise HTTPException(503, str(exc))
-    except ChatRateLimited as exc:
-        raise HTTPException(429, str(exc))
-    except weather.WeatherUnavailable as exc:
-        raise HTTPException(503, f"Live weather unavailable: {exc}")
-    except KeyError as exc:
-        raise HTTPException(404, f"Unknown ward/city: {exc}")
-
-
-@app.get("/metrics")
-def metrics():
-    """Chronological (2024-2025 holdout) validation metrics written by scripts/train_models.py."""
-    path = config.ROOT / "training_report.json"
-    if not path.is_file():
-        raise HTTPException(404, "Run python scripts/train_models.py first")
-    return __import__("json").loads(path.read_text(encoding="utf-8"))
+def chat(body: ChatRequest):
+    """Optional. Gemini only when configured and online; otherwise a deterministic local template.
+    Rate limits (429), unknown wards (404) and bad input (422) are always reported, never hidden."""
+    global _chat
+    if config.GEMINI_API_KEY and not weather.is_offline():
+        try:
+            from chat import ChatRateLimited, ChatService  # lazy: core never imports the LLM client
+            if _chat is None:
+                _chat = ChatService(service)
+            try:
+                return _chat.ask(body.message, body.session_id, body.ward_id, body.horizon_weeks)
+            except ChatRateLimited as exc:
+                raise HTTPException(429, str(exc)) from exc
+            except KeyError as exc:
+                raise HTTPException(404, f"Unknown ward: {exc}") from exc
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+        except HTTPException:
+            raise
+        except Exception:  # Gemini/network failure -> deterministic fallback
+            pass
+    return {"reply": run(_template_reply, body), "source": "deterministic_template", "cached": False}
 
 
 @app.get("/stats")
 def stats():
-    return {"chatbot": "Gemini API only", "configured": bool(bot.client)}
+    return {"dataset_rows": len(service.history), "wards": len(service.available_wards()),
+            "available_horizons": sorted(service.models), "chatbot_configured": bool(config.GEMINI_API_KEY),
+            "offline_mode": weather.is_offline()}
